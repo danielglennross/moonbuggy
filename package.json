@@ -1,0 +1,21 @@
+{
+  "name": "graphql-apollo-decorators",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "start": "tslint --fast index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "daniel ross",
+  "license": "ISC",
+  "dependencies": {
+    "@types/hapi": "^16.1.6",
+    "require-dir": "^0.3.2",
+    "ts-node": "^3.2.0",
+    "typescript": "^2.4.1"
+  },
+  "devDependencies": {
+    "tslint": "^5.5.0"
+  }
+}
