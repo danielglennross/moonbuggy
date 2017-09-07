@@ -11,6 +11,11 @@
   "license": "ISC",
   "dependencies": {
     "@types/hapi": "^16.1.6",
+    "graphql": "^0.10.0",
+    "graphql-server-hapi": "^1.1.2",
+    "graphql-tools": "^0.11.0",
+    "hapi": "^16.5.2",
+    "reflect-metadata": "^0.1.10",
     "require-dir": "^0.3.2",
     "ts-node": "^3.2.0",
     "typescript": "^2.4.1"

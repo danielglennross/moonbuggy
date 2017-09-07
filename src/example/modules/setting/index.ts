@@ -1,17 +1,16 @@
 'use strict';
 
-import { IResolver, Context, IModule } from '../../../schema';
-import { module, exportSchema, exportResolvers, rule } from '../../../decorators';
+import { Context } from '../../../schema';
+import { module, rule, Schema, ExportResolver } from '../../../decorators';
 
 const requestExists = (context: Context): boolean => !!context.request;
 
 @module('Setting')
-@exportSchema('basic')
-@exportResolvers('settings')
-class Setting implements IModule {
+class Setting {
 
+  @ExportResolver('getSettings')
   @rule(requestExists)
-  public settings(root: any, args: any, context: Context): IResolver {
+  public settings(root: any, args: any, context: Context) {
     return [{
       id: 'setting1',
       value: 'value1',
@@ -21,7 +20,8 @@ class Setting implements IModule {
     }];
   }
 
-  public basic(): string {
+  @Schema()
+  public basic() {
     return `
       type Setting {
         id: String

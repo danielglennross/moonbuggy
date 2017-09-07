@@ -1,72 +1,79 @@
-```ts
+An AOP framework for building modular Apollo GraphQL schema
 
+See `src/example` for full example
+
+```ts
 'use strict';
 
-import * as hapi from "hapi";
+import { Context } from './schema';
+import { 
+  module, 
+  importResolvers, 
+  rule, 
+  ExportResolver, 
+  Resolver, 
+  Schema 
+} from './decorators';
 
-// @module - marks the module name
-// @resolver - marks a resolver func
-// @schema - marks a schema func
-// @rule - evaluates a func with sig: `(context: Context): boolean`
+const isAuth = (context: Context): boolean => Boolean(context.request.auth.credentials);
 
-// marker interface for resolver functions (forces func to return something, unlike `any`)
-interface IResolver {}
-interface IModule {}
+@module('User') // define our module name
+@importResolvers('Setting', 'getSettings') // import resolvers from `Setting` modules to be used
+class User {
 
-// context to be passed down
-class Context {
-  request: hapi.Request
-}
-
-// constraints
-const isAuth = (context: Context): boolean => context.request.auth.credentials;
-const hasScope = (scope: string) => (context: Context): boolean => context.request.auth.credentials.scope.includes(scope);
-
-@module('module')
-class MyModule implements IModule {
-
-  public MyModule() {}
-
-  @resolver
-  @rule(isAuth)
-  public user(root: any, args: any, context: Context): IResolver {
+  @ExportResolver() // mark resolver as exported (isn't bundled into `User` module resolvers) - used by another
+  @rule(isAuth, new Error('User is unauthenticated')) // define a precondition
+  public user(root: any, args: any, context: Context) {
     return {
-      id: '1234',
-      name: 'daniel'
+      id: '1',
+      name: 'daniel',
+      address: {
+        line1: 'line1',
+        postcode: 'ne23 ftg',
+      },
     };
   }
 
-  @resolver
-  @rule(isAuth)
-  @rule(hasScope('setting'))
-  public setting(root: any, args: any, context: Context): IResolver {
-    return {
-      id: 'isAdmin',
-      value: 'true'
-    };
+  @Resolver() // mark as internal resolver (i.e. used only by this `User` module)
+  public friends(root: any, args: any, context: Context) {
+    return [{
+      name: 'graeme',
+    }];
   }
 
-  @schema
-  public user(): string {
+  @Schema() // mark partial/full schema
+  public friendsSch() {
     return `
-      type User {
-        id: String,
+      type Friend {
         name: String
       }
     `;
   }
 
-  @schema
-  public setting(): string {
+  @Schema() // mark partial/full schema
+  public address() {
     return `
-      type Setting {
-        id: String,
-        value: String
+      type Address {
+        line1: String
+        postcode: String
+      }
+    `;
+  }
+
+  @Schema() // mark partial/full schema
+  public basic() {
+    return `
+      type User {
+        id: String
+        name: String
+        address: Address
+        friends: [Friend]
+        getSettings: [Setting]
       }
     `;
   }
 
 }
 
-export default new MyModule();
+export default new User(); // return instance of module as default export
 ```

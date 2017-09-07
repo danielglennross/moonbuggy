@@ -1,18 +1,17 @@
 'use strict';
 
-import { IResolver, Context, IModule } from '../../../schema';
-import { module, importResolvers, exportSchema, exportResolvers, rule } from '../../../decorators';
+import { Context } from '../../../schema';
+import { module, importResolvers, rule, ExportResolver, Resolver, Schema } from '../../../decorators';
 
 const requestExists = (context: Context): boolean => !!context.request;
 
 @module('User')
-@exportSchema('basic', 'address')
-@exportResolvers('user')
-@importResolvers('Settings', 'settings')
-class User implements IModule {
+@importResolvers('Setting', 'getSettings')
+class User {
 
+  @ExportResolver()
   @rule(requestExists)
-  public user(root: any, args: any, context: Context): IResolver {
+  public user(root: any, args: any, context: Context) {
     return {
       id: '1',
       name: 'daniel',
@@ -23,22 +22,41 @@ class User implements IModule {
     };
   }
 
-  public address(): string {
+  @Resolver()
+  public friends(root: any, args: any, context: Context) {
+    return [{
+      name: 'graeme',
+    }];
+  }
+
+  @Schema()
+  public friendsSch() {
+    return `
+      type Friend {
+        name: String
+      }
+    `;
+  }
+
+  @Schema()
+  public address() {
     return `
       type Address {
-        line1: Stirng
+        line1: String
         postcode: String
       }
     `;
   }
 
-  public basic(): string {
+  @Schema()
+  public basic() {
     return `
       type User {
         id: String
         name: String
         address: Address
-        settings: [Setting]
+        friends: [Friend]
+        getSettings: [Setting]
       }
     `;
   }
