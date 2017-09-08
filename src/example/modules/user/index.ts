@@ -1,17 +1,15 @@
 'use strict';
 
-import { Context } from '../../../schema';
-import { module, importResolvers, rule, ExportResolver, Resolver, Schema } from '../../../decorators';
+import { module, importResolvers, rule, Resolver, Schema, exported } from '../../../decorators';
 
-const requestExists = (context: Context): boolean => !!context.request;
+const requestExists = (context: any): boolean => !!context;
 
-@module('User')
-@importResolvers('Setting', 'getSettings')
+@module('User', importResolvers('Setting', 'getSettings'))
 class User {
 
-  @ExportResolver()
+  @Resolver(exported())
   @rule(requestExists)
-  public user(root: any, args: any, context: Context) {
+  public user(root: any, args: any, context: any) {
     return {
       id: '1',
       name: 'daniel',
@@ -23,7 +21,7 @@ class User {
   }
 
   @Resolver()
-  public friends(root: any, args: any, context: Context) {
+  public friends(root: any, args: any, context: any) {
     return [{
       name: 'graeme',
     }];

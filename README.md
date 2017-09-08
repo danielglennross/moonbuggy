@@ -5,7 +5,7 @@ See `src/example` for full example
 ```ts
 'use strict';
 
-import { Context } from './schema';
+import { Request } from 'hapi';
 import { 
   module, 
   importResolvers, 
@@ -15,15 +15,16 @@ import {
   Schema 
 } from './decorators';
 
-const isAuth = (context: Context): boolean => Boolean(context.request.auth.credentials);
+const isAuth = (request: Request): boolean => Boolean(request.auth.credentials);
 
-@module('User') // define our module name
-@importResolvers('Setting', 'getSettings') // import resolvers from `Setting` modules to be used
+// define our module name
+// import resolvers from `Setting` modules to be used (optional)
+@module('User', importResolvers('Setting', 'getSettings')) 
 class User {
 
   @ExportResolver() // mark resolver as exported (isn't bundled into `User` module resolvers) - used by another
-  @rule(isAuth, new Error('User is unauthenticated')) // define a precondition
-  public user(root: any, args: any, context: Context) {
+  @rule(isAuth, new Error('User is unauthenticated')) // define a precondition (optional)
+  public user(root: any, args: any, context: Request) {
     return {
       id: '1',
       name: 'daniel',
@@ -34,15 +35,15 @@ class User {
     };
   }
 
-  @Resolver() // mark as internal resolver (i.e. used only by this `User` module)
-  public friends(root: any, args: any, context: Context) {
+  @Resolver('friends') // mark as internal resolver (i.e. used only by this `User` module)
+  public friendsResolver(root: any, args: any, context: Request) {
     return [{
       name: 'graeme',
     }];
   }
 
   @Schema() // mark partial/full schema
-  public friendsSch() {
+  public friends() {
     return `
       type Friend {
         name: String
