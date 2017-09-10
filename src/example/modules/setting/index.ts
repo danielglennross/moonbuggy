@@ -1,13 +1,13 @@
 'use strict';
 
-import { module, rule, Schema, Resolver, name, exported } from '../../../decorators';
+import { module, rule, Schema, Resolver, name, exportOnly } from '../../../decorators';
 
 const requestExists = (context: any): boolean => !!context;
 
 @module('Setting')
 class Setting {
 
-  @Resolver(name('getSettings'), exported())
+  @Resolver(name('getSettings'), exportOnly())
   @rule(requestExists)
   public settings(root: any, args: any, context: any) {
     return [{

@@ -1,8 +1,10 @@
 'use strict';
 
-import { module, rule, Schema, importResolvers } from '../../../decorators';
+import { module, rule, Schema, imports } from '../../../decorators';
 
-@module('Query', importResolvers('User', 'user'))
+@module('Query', 
+  imports('User', ['user']),
+)
 class Query {
 
   @Schema()

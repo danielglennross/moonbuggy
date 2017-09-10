@@ -1,13 +1,15 @@
 'use strict';
 
-import { module, importResolvers, rule, Resolver, Schema, exported } from '../../../decorators';
+import { module, imports, rule, Resolver, Schema, exportOnly } from '../../../decorators';
 
 const requestExists = (context: any): boolean => !!context;
 
-@module('User', importResolvers('Setting', 'getSettings'))
+@module('User', 
+  imports('Setting', ['getSettings']),
+)
 class User {
 
-  @Resolver(exported())
+  @Resolver(exportOnly())
   @rule(requestExists)
   public user(root: any, args: any, context: any) {
     return {

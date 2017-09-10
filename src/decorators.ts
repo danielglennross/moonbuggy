@@ -1,7 +1,7 @@
 'use strict';
 
 import 'reflect-metadata';
-import { getNonEnumerableEntries } from './objectExt';
+import { getNonEnumerableEntries, tuple } from './objectExt';
 import { ImportResolver, Resolver as ModuleResolver } from './schema';
 
 abstract class BaseGraphQLMeta implements IMetaDataMatcher {
@@ -32,13 +32,13 @@ export function name(n: string): ResolverOptionFn {
  };
 }
 
-export function exported(): ResolverOptionFn {
+export function exportOnly(): ResolverOptionFn {
   return function(option: GraphQLOptionalMeta) {
    option.export = true;
   };
  }
 
-export type rulePredicate = (context: any) => boolean;
+export type rulePredicate = (context: any) => boolean | Promise<boolean>;
 
 interface IMetaDataPattern {
   Meta: (meta: GraphQLMeta) => void;
@@ -58,7 +58,7 @@ class ModuleOption {
 
 type ModuleOptionFn = (option: ModuleOption) => void;
 
-export function importResolvers(moduleName: string, ...resolvers: string[]): ModuleOptionFn {
+export function imports(moduleName: string, resolvers: string[]): ModuleOptionFn {
   return function(option: ModuleOption) {
     const importResolver: ImportResolver = { moduleName, resolverNames: resolvers };
     option.importResolvers = [...option.importResolvers || [], importResolver];
@@ -126,14 +126,60 @@ export function Resolver(...options: ResolverOptionFn[]) {
 export function rule(predicate: rulePredicate, error: Error = null) {
   return function(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
-    descriptor.value = function(...args: any[]) {
+    descriptor.value = async function(...args: any[]): Promise<any> {
       const [ root, query, context, paramInfo ] = args;
+    
+      const [ok, err] = await tuple(predicate(context))
 
-      if (!predicate(context)) {
+      if (!ok || err) {
         throw error || Error(`rule failed for ${propertyKey}`);
       }
 
       const result = originalMethod.apply(this, args);
+      return result;
+    };
+    return descriptor;
+  };
+}
+
+export interface ifield {
+  name: string,
+  rule: rulePredicate
+}
+
+export function field(name: string, rule: rulePredicate): ifield  {
+  return { name, rule };
+}
+
+export function inputMapper(name: string, ...fields: ifield[]) {
+  return function(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    descriptor.value = async function(...args: any[]): Promise<any> {
+      const [ root, data, context, paramInfo ] = args;
+    
+      const inputs = getNonEnumerableEntries(data[name]).filter(([, v]:any) => Boolean(v));
+      if (inputs.length !== 1) {
+        throw new Error('Only one field allowed');
+      }
+
+      const [fieldName] = inputs[0];
+      const mapping = fields.find(f => f.name === fieldName);
+      if (!mapping) {
+        throw new Error('Cannot find mapper');
+      }
+      
+      const [ok, err] = await tuple(mapping.rule(context));
+      if (err || !ok) {
+        throw new Error(err || "Failed auth");
+      }
+
+      const result = originalMethod.apply(this, [
+        root, 
+        Object.assign(data, { [name]: data[name][fieldName] }), 
+        context, 
+        paramInfo
+      ]);
+
       return result;
     };
     return descriptor;
