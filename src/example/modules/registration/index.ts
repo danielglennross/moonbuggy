@@ -1,6 +1,6 @@
 'use strict';
 
-import { module, rule, Schema, Resolver, exportOnly, name, imports } from '../../../decorators';
+import { module, rule, Schema, Resolver, exportOnly, name, imports, inputMapper, field } from '../../../decorators';
 
 @module('Registration')
 class Registration {
@@ -9,17 +9,23 @@ class Registration {
     name('register'), 
     exportOnly(),
   )
-  @inputMapper('register',
-    field('retail', (request) => request.retail),
-    field('digital', (request) => request.digital)
+  @inputMapper('input', new Error('fails'),
+    field('retail', (request) => !!request),
+    field('digital', (request) => !!request)
   )
   public register(root: any, args: any, context: any) {
-
+    return {
+      name: 'daniel'
+    };
   }
 
   @Schema()
   public mapper() {
     return `
+      type Result {
+        name: String
+      }
+
       input Retail {
         PIN: String
       }

@@ -8,7 +8,7 @@ import { module, rule, Schema, imports } from '../../../decorators';
 class Query {
 
   @Schema()
-  public basic() {
+  public query() {
     return `
       type Query {
         user: User

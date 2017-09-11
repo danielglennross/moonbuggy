@@ -7,8 +7,8 @@ export function getNonEnumerableEntries<T>(object: { [s: string]: T }): [string,
 export async function tuple<T>(promise: T | Promise<T>): Promise<[T, any]> {  
   try {
     const data = await promise;
-    return <[any, T]>[data, null];
+    return Promise.resolve<[T, any]>([data, null]);
   } catch (err) {
-    return <[any, T]>[null, err]
+    return Promise.resolve<[T, any]>([null, err])
   }
 }

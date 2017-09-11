@@ -132,7 +132,7 @@ export function rule(predicate: rulePredicate, error: Error = null) {
       const [ok, err] = await tuple(predicate(context))
 
       if (!ok || err) {
-        throw error || Error(`rule failed for ${propertyKey}`);
+        throw error || new Error(`rule failed for ${propertyKey}`);
       }
 
       const result = originalMethod.apply(this, args);
@@ -151,31 +151,44 @@ export function field(name: string, rule: rulePredicate): ifield  {
   return { name, rule };
 }
 
-export function inputMapper(name: string, ...fields: ifield[]) {
+export function inputMapper(inputName: string, ...fields: ifield[])
+  : (target: any, propertyKey: string, descriptor: PropertyDescriptor) => void;
+
+export function inputMapper(inputName: string, error: Error, ...fields: ifield[])
+  : (target: any, propertyKey: string, descriptor: PropertyDescriptor) => void;
+
+export function inputMapper(inputName: string, errorOrField: Error | ifield, ...fields: ifield[]) {
+  let error: Error = null;
+  if (errorOrField instanceof Error) {
+    error = errorOrField
+  } else {
+    fields = [errorOrField as ifield, ...fields]
+  }
+  
   return function(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
     descriptor.value = async function(...args: any[]): Promise<any> {
       const [ root, data, context, paramInfo ] = args;
     
-      const inputs = getNonEnumerableEntries(data[name]).filter(([, v]:any) => Boolean(v));
+      const inputs = getNonEnumerableEntries(data[inputName]).filter(([, v]:any) => Boolean(v));
       if (inputs.length !== 1) {
-        throw new Error('Only one field allowed');
+        throw new Error('Only one field allowed in an input union');
       }
 
       const [fieldName] = inputs[0];
       const mapping = fields.find(f => f.name === fieldName);
       if (!mapping) {
-        throw new Error('Cannot find mapper');
+        throw new Error('Cannot find type matcher');
       }
       
       const [ok, err] = await tuple(mapping.rule(context));
       if (err || !ok) {
-        throw new Error(err || "Failed auth");
+        throw error || new Error(`rule failed for ${propertyKey}`);
       }
 
       const result = originalMethod.apply(this, [
         root, 
-        Object.assign(data, { [name]: data[name][fieldName] }), 
+        Object.assign(data, { [inputName]: data[inputName][fieldName] }), 
         context, 
         paramInfo
       ]);
