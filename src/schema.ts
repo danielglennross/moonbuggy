@@ -12,3 +12,8 @@ export class ImportResolver {
   public moduleName: string;
   public resolverNames: string[];
 }
+
+export const $schemas = Symbol('schemas')
+export const $resolvers = Symbol('resolvers')
+export const $moduleName = Symbol('moduleName')
+export const $importResolvers = Symbol('importResolvers')

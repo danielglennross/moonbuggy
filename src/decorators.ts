@@ -2,10 +2,10 @@
 
 import 'reflect-metadata';
 import { getNonEnumerableEntries, tuple } from './objectExt';
-import { ImportResolver, Resolver as ModuleResolver } from './schema';
+import { ImportResolver, Resolver as ModuleResolver, $schemas, $resolvers, $importResolvers, $moduleName } from './schema';
 
 abstract class BaseGraphQLMeta implements IMetaDataMatcher {
-  public type: string;
+  public type: symbol;
   public abstract match(p: IMetaDataPattern);
 }
 
@@ -74,8 +74,8 @@ export function module(moduleName: string, ...options: ModuleOptionFn[]) {
 
     options.forEach(o => o(moduleOption));
 
-    target['__moduleName'] = moduleName;
-    target['__importResolvers'] = moduleOption.importResolvers;
+    target[$moduleName] = moduleName;
+    target[$importResolvers] = moduleOption.importResolvers;
 
     const obj: any = (target as any).prototype;
 
@@ -83,12 +83,10 @@ export function module(moduleName: string, ...options: ModuleOptionFn[]) {
       function attachMetaDataToModule(m: BaseGraphQLMeta) {
         m.match({
           Meta: (meta: GraphQLMeta) => {
-            const field = `__${meta.type}s`;
-            target[field] = [...target[field] || [], key];
+            target[m.type] = [...target[m.type] || [], key];
           },
           OptionalMeta: (meta: GraphQLOptionalMeta) => {
-            const field = `__${meta.type}s`;
-            target[field] = [...target[field] || [], (<ModuleResolver>{
+            target[m.type] = [...target[m.type] || [], (<ModuleResolver>{
               field: key,
               name: meta.name || key,
               export: meta.export,
@@ -108,13 +106,13 @@ export function module(moduleName: string, ...options: ModuleOptionFn[]) {
 // Method decorators
 export function Schema() {
   const meta = new GraphQLMeta();
-  meta.type = 'schema';
+  meta.type = $schemas;
   return Reflect.metadata('design:graphqlmeta', meta);
 }
 
 export function Resolver(...options: ResolverOptionFn[]) {
   const meta = new GraphQLOptionalMeta();
-  meta.type = 'resolver';
+  meta.type = $resolvers;
   const data: GraphQLOptionalMeta = options.reduce((obj, op): any => {
     op(obj);
     return obj;
