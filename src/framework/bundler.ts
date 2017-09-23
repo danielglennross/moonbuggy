@@ -1,5 +1,3 @@
-'use strict';
-
 import requireDir = require('require-dir');
 
 import { getNonEnumerableEntries } from './utils/objectExt';

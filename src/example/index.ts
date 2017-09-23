@@ -1,5 +1,3 @@
-'use strict';
-
 import { Server } from 'hapi';
 import { graphqlHapi, graphiqlHapi } from 'graphql-server-hapi';
 import { makeExecutableSchema } from 'graphql-tools';
