@@ -2,11 +2,19 @@
 
 import requireDir = require('require-dir');
 
-import { getNonEnumerableEntries } from './objectExt';
-import { Resolver, ImportResolver, $schemas, $resolvers, $moduleName, $importResolvers } from './schema';
+import { getNonEnumerableEntries } from './utils/objectExt';
 
-export class Options {
-  public root: string;
+import {
+  Resolver,
+  ImportModule,
+  $schemas,
+  $resolvers,
+  $moduleName,
+  $importResolvers,
+} from './schema';
+
+export class BundleOptions {
+  public moduleRootDir: string;
   public moduleFilename: string;
 }
 
@@ -36,8 +44,8 @@ function bundleResolvers(m: any, bundle: Bundle) {
   });
 }
 
-function bundleImportResolvers(_module: any, bundle: Bundle, modules: any[]) {
-  (_module[$importResolvers] || []).forEach((irProp: ImportResolver) => {
+function bundleImportResolvers(m: any, bundle: Bundle, modules: any[]) {
+  (m[$importResolvers] || []).forEach((irProp: ImportModule) => {
     const matchingModule = modules.find(
       (ir: any) => ir.__proto__.constructor[$moduleName] === irProp.moduleName,
     );
@@ -70,21 +78,21 @@ function bundleImportResolvers(_module: any, bundle: Bundle, modules: any[]) {
 
     (irProp.resolverNames || []).forEach((rn: string) => {
       const { name, value } = filteredModule.find(v => v.name === rn);
-      bundle.resolvers[_module[$moduleName]] = Object.assign(
-        bundle.resolvers[_module[$moduleName]] || {}, { [name]: value as any },
+      bundle.resolvers[m[$moduleName]] = Object.assign(
+        bundle.resolvers[m[$moduleName]] || {}, { [name]: value as any },
       );
     });
   });
 }
 
-export function getBundle(options: Options): Bundle {
+export function getBundle(options: BundleOptions): Bundle {
   const defaultBundle: Bundle = {
     typeDefs: '',
     resolvers: {},
   };
 
   const dirs = requireDir(
-    options.root || './modules', { recurse: true },
+    options.moduleRootDir || './modules', { recurse: true },
   );
 
   const modules = Object.values(dirs).map(
@@ -92,11 +100,11 @@ export function getBundle(options: Options): Bundle {
   );
 
   const bundled: Bundle = modules.reduce((b: Bundle, m: any) => {
-    const _module = m.__proto__.constructor;
-    if (_module[$moduleName]) {
-      bundleSchema(_module, b);
-      bundleResolvers(_module, b);
-      bundleImportResolvers(_module, b, modules);
+    const mod = m.__proto__.constructor;
+    if (mod[$moduleName]) {
+      bundleSchema(mod, b);
+      bundleResolvers(mod, b);
+      bundleImportResolvers(mod, b, modules);
     }
     return b;
   }, defaultBundle);

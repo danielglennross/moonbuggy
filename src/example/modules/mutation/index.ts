@@ -1,13 +1,13 @@
 'use strict';
 
-import { module, rule, Schema, imports } from '../../../decorators';
+import { module, rule, schema, imports, name } from '../../../index';
 
-@module('Mutation', 
-  imports('Registration', ['register'])
+@module(name('Mutation'),
+  imports('Registration', ['register']),
 )
 class Mutation {
 
-  @Schema()
+  @schema()
   public mutation() {
     return `
       type Mutation {

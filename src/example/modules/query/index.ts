@@ -1,13 +1,13 @@
 'use strict';
 
-import { module, rule, Schema, imports } from '../../../decorators';
+import { module, rule, schema, imports } from '../../../index';
 
-@module('Query', 
+@module(
   imports('User', ['user']),
 )
 class Query {
 
-  @Schema()
+  @schema()
   public query() {
     return `
       type Query {

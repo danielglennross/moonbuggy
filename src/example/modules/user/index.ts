@@ -1,15 +1,22 @@
 'use strict';
 
-import { module, imports, rule, Resolver, Schema, exportOnly } from '../../../decorators';
+import {
+  module,
+  imports,
+  rule,
+  resolver,
+  schema,
+  exportOnly,
+} from '../../../index';
 
 const requestExists = (context: any): boolean => !!context;
 
-@module('User', 
+@module(
   imports('Setting', ['getSettings']),
 )
 class User {
 
-  @Resolver(exportOnly())
+  @resolver(exportOnly())
   @rule(requestExists)
   public user(root: any, args: any, context: any) {
     return {
@@ -22,14 +29,14 @@ class User {
     };
   }
 
-  @Resolver()
+  @resolver()
   public friends(root: any, args: any, context: any) {
     return [{
       name: 'graeme',
     }];
   }
 
-  @Schema()
+  @schema()
   public friendsSch() {
     return `
       type Friend {
@@ -38,7 +45,7 @@ class User {
     `;
   }
 
-  @Schema()
+  @schema()
   public address() {
     return `
       type Address {
@@ -48,7 +55,7 @@ class User {
     `;
   }
 
-  @Schema()
+  @schema()
   public basic() {
     return `
       type User {

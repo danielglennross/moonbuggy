@@ -3,10 +3,10 @@
 import { Server } from 'hapi';
 import { graphqlHapi, graphiqlHapi } from 'graphql-server-hapi';
 import { makeExecutableSchema } from 'graphql-tools';
-import { getBundle, Options, Bundle } from '../bundler';
+import { getBundle, BundleOptions, Bundle } from '../index';
 
-const options: Options = {
-  root: `${__dirname}/modules`,
+const options: BundleOptions = {
+  moduleRootDir: `${__dirname}/modules`,
   moduleFilename: 'index',
 };
 

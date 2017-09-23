@@ -3,27 +3,33 @@ An AOP framework for building modular Apollo GraphQL schema
 See `src/example` for full example
 
 ```ts
-'use strict';
-
 import { Request } from 'hapi';
 import { 
   module, 
-  importResolvers, 
+  imports,
+  name,
   rule, 
-  ExportResolver, 
-  Resolver, 
-  Schema 
-} from './decorators';
+  exportOnly, 
+  resolver, 
+  schema 
+} from './index';
 
 const isAuth = (request: Request): boolean => Boolean(request.auth.credentials);
 
-// define our module name
-// import resolvers from `Setting` modules to be used (optional)
-@module('User', importResolvers('Setting', 'getSettings')) 
+// define our module (name is class name by default, use `name` to override)
+// optionally import resolvers from `Setting` module (to be used within our schema)
+@module(
+  name('Player'), 
+  imports('Setting', ['getSettings']),
+) 
 class User {
-
-  @ExportResolver() // mark resolver as exported (isn't bundled into `User` module resolvers) - used by another
-  @rule(isAuth, new Error('User is unauthenticated')) // define a precondition (optional)
+  // define resolver (name is method name by default, use `name` to override)
+  //
+  // optionally mark resolver as `exportOnly` 
+  // this resolver will not be bundled up in this module but can be imported by others
+  @resolver(name('user'), exportOnly()) 
+  // optionally define pre-conditions (can have multiple)
+  @rule(isAuth, new Error('User is unauthenticated'))
   public user(root: any, args: any, context: Request) {
     return {
       id: '1',
@@ -35,14 +41,14 @@ class User {
     };
   }
 
-  @Resolver('friends') // mark as internal resolver (i.e. used only by this `User` module)
+  @resolver(name('friends'))
   public friendsResolver(root: any, args: any, context: Request) {
     return [{
       name: 'graeme',
     }];
   }
 
-  @Schema() // mark partial/full schema
+  @schema() // mark partial/full schema
   public friends() {
     return `
       type Friend {
@@ -51,7 +57,7 @@ class User {
     `;
   }
 
-  @Schema() // mark partial/full schema
+  @schema()
   public address() {
     return `
       type Address {
@@ -61,7 +67,7 @@ class User {
     `;
   }
 
-  @Schema() // mark partial/full schema
+  @schema()
   public basic() {
     return `
       type User {
@@ -77,4 +83,66 @@ class User {
 }
 
 export default new User(); // return instance of module as default export
+```
+
+For Mutations, if we want to simulate a union type -  we can take advatage of `inputMappers`.
+Here, we define an input with multiple fields - yet provide only one resolver for the type.
+An `inputMapper` decorates the resolver which states which input field we're decorating, and the rules
+associated with each field in the union type. 
+
+A mutation request should only provide one implemented field. The corresponding
+rule is evaluated ensuring the request is valid, and the field's data is passed to the single resolver.
+
+```typescript
+import { 
+  module, 
+  imports,
+  name,
+  rule, 
+  exportOnly, 
+  resolver, 
+  schema 
+} from './index';
+
+@module()
+class Registration {
+
+  @resolver(
+    name('register'),
+    exportOnly(),
+  )
+  @inputMapper('input', new Error('failed to authorize register input'),
+    field('retail', (request) => !!request.auth.credentials.retail),
+    field('digital', (request) => !!request.auth.credentials.digital),
+  )
+  public register(root: any, args: any, context: any) {
+    return {
+      name: 'daniel',
+    };
+  }
+
+  @schema()
+  public mapper() {
+    return `
+      type Result {
+        name: String
+      }
+
+      input Retail {
+        PIN: String
+      }
+
+      input Digital {
+        username: String
+      }
+
+      input RegistrationUnion {
+        retail: Retail
+        digital: Digital
+      }
+    `;
+  }
+}
+
+export default new Registration();
 ```

@@ -1,25 +1,35 @@
 'use strict';
 
-import { module, rule, Schema, Resolver, exportOnly, name, imports, inputMapper, field } from '../../../decorators';
+import {
+  module,
+  rule,
+  schema,
+  resolver,
+  exportOnly,
+  name,
+  imports,
+  inputMapper,
+  field,
+} from '../../../index';
 
-@module('Registration')
+@module(name('Registration'))
 class Registration {
 
-  @Resolver(
-    name('register'), 
+  @resolver(
+    name('register'),
     exportOnly(),
   )
   @inputMapper('input', new Error('fails'),
     field('retail', (request) => !!request),
-    field('digital', (request) => !!request)
+    field('digital', (request) => !!request),
   )
   public register(root: any, args: any, context: any) {
     return {
-      name: 'daniel'
+      name: 'daniel',
     };
   }
 
-  @Schema()
+  @schema()
   public mapper() {
     return `
       type Result {

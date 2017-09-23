@@ -1,13 +1,20 @@
 'use strict';
 
-import { module, rule, Schema, Resolver, name, exportOnly } from '../../../decorators';
+import {
+  module,
+  rule,
+  schema,
+  resolver,
+  name,
+  exportOnly,
+} from '../../../index';
 
 const requestExists = (context: any): boolean => !!context;
 
-@module('Setting')
+@module()
 class Setting {
 
-  @Resolver(name('getSettings'), exportOnly())
+  @resolver(name('getSettings'), exportOnly())
   @rule(requestExists)
   public settings(root: any, args: any, context: any) {
     return [{
@@ -19,7 +26,7 @@ class Setting {
     }];
   }
 
-  @Schema()
+  @schema()
   public basic() {
     return `
       type Setting {
