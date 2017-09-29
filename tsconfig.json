@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
+    "rootDir": "./src/moonbuggy",
+    "outDir": "./dist",
     "target": "es2017",
     "module": "commonjs",
     "moduleResolution": "node",
+    "declaration": true,
     "watch": false,
     "sourceMap": true,
     "allowJs": true,
@@ -22,6 +25,8 @@
     "src/**/*"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/example",
+    "dist"
   ]
 }

@@ -1,4 +1,4 @@
-An AOP framework for building modular Apollo GraphQL schema
+An AOP framework for building modular Apollo-Server GraphQL schema
 
 See `src/example` for full example
 

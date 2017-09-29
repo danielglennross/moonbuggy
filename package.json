@@ -2,22 +2,19 @@
   "name": "graphql-apollo-decorators",
   "version": "1.0.0",
   "description": "",
-  "main": "index.ts",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "ts-node --fast index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile": "tsc",
+    "prepublish": "npm run compile"
+  },
+  "typescript": {
+    "definition": "dist/index.d.ts"
   },
   "author": "daniel ross",
   "license": "ISC",
   "dependencies": {
-    "@types/hapi": "^16.1.6",
-    "graphql": "^0.10.0",
-    "graphql-server-hapi": "^1.1.2",
-    "graphql-tools": "^0.11.0",
-    "hapi": "^16.5.2",
     "reflect-metadata": "^0.1.10",
     "require-dir": "^0.3.2",
-    "ts-node": "^3.2.0",
     "typescript": "^2.4.1"
   },
   "devDependencies": {

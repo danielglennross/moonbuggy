@@ -33,13 +33,13 @@ export function inputMapper(inputName: string, errorOrField: Error | IField, ...
 
       const inputs = getNonEnumerableEntries(data[inputName]).filter(([, v]: any) => Boolean(v));
       if (inputs.length !== 1) {
-        throw new Error('Only one field allowed in an input union');
+        throw new Error('Only one field is allowed in an input union');
       }
 
       const [fieldName] = inputs[0];
       const mapping = fields.find(f => f.name === fieldName);
       if (!mapping) {
-        throw new Error('Cannot find type matcher');
+        throw new Error(`Cannot find type matcher for: "${fieldName}"`);
       }
 
       const [ok, err] = await tuple(mapping.rule(context));
