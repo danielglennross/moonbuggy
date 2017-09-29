@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { OptionsTag } from './types';
 import { $resolvers } from '../schema';
 
-type ResolverOptionFn = (option: OptionsTag) => void;
+export type ResolverOptionFn = (option: OptionsTag) => void;
 
 export function exportOnly(): ResolverOptionFn {
   return function (option: OptionsTag) {

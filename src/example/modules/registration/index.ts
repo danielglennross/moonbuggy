@@ -10,7 +10,7 @@ import {
   imports,
   inputMapper,
   field,
-} from '../../../index';
+} from '../../../moonbuggy/index';
 
 @module(name('Registration'))
 class Registration {

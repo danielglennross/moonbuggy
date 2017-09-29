@@ -8,7 +8,6 @@
     "declaration": true,
     "watch": false,
     "sourceMap": true,
-    "allowJs": true,
     "noImplicitAny": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

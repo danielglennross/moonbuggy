@@ -1,7 +1,7 @@
 import { Server } from 'hapi';
 import { graphqlHapi, graphiqlHapi } from 'graphql-server-hapi';
 import { makeExecutableSchema } from 'graphql-tools';
-import { getBundle, BundleOptions, Bundle } from '../index';
+import { getBundle, BundleOptions, Bundle } from '../moonbuggy/index';
 
 const options: BundleOptions = {
   moduleRootDir: `${__dirname}/modules`,

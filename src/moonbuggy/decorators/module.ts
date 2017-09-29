@@ -4,12 +4,12 @@ import { Tag, SimpleTag, OptionsTag } from './types';
 import { getNonEnumerableEntries } from '../utils/objectExt';
 import { ImportModule, Resolver, $moduleName, $importResolvers } from '../schema';
 
-class ModuleOption {
+export class ModuleOption {
   public importResolvers: ImportModule[];
   public name: string;
 }
 
-type ModuleOptionFn = (option: ModuleOption) => void;
+export type ModuleOptionFn = (option: ModuleOption) => void;
 
 export function imports(moduleName: string, resolvers: string[]): ModuleOptionFn {
   return function(option: ModuleOption) {

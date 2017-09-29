@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { rulePredicate } from './types';
 import { getNonEnumerableEntries, tuple } from '../utils/objectExt';
 
-interface IField {
+export interface IField {
   name: string;
   rule: rulePredicate;
 }

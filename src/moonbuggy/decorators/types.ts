@@ -1,11 +1,11 @@
 export type rulePredicate = (context: any) => boolean | Promise<boolean>;
 
-interface ITagPattern {
+export interface ITagPattern {
   SimpleTag: (meta: SimpleTag) => void;
   OptionsTag: (optionalMeta: OptionsTag) => void;
 }
 
-interface ITagMatcher {
+export interface ITagMatcher {
   match(metaDataPattern: ITagPattern);
 }
 

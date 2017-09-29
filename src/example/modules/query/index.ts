@@ -1,6 +1,6 @@
 'use strict';
 
-import { module, rule, schema, imports } from '../../../index';
+import { module, rule, schema, imports } from '../../../moonbuggy/index';
 
 @module(
   imports('User', ['user']),

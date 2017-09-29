@@ -7,7 +7,7 @@ import {
   resolver,
   schema,
   exportOnly,
-} from '../../../index';
+} from '../../../moonbuggy/index';
 
 const requestExists = (context: any): boolean => !!context;
 
