@@ -1,7 +1,9 @@
 'use strict';
 
 import {
-  module,
+  forType,
+  typeFor,
+  moduleResolver,
   imports,
   rule,
   resolver,
@@ -11,8 +13,8 @@ import {
 
 const requestExists = (context: any): boolean => !!context;
 
-@module(
-  imports('Setting', ['getSettings']),
+@imports(
+  forType('User', moduleResolver('Setting', ['getSettings'])),
 )
 class User {
 
@@ -29,7 +31,7 @@ class User {
     };
   }
 
-  @resolver()
+  @resolver(typeFor('User'))
   public friends(root: any, args: any, context: any) {
     return [{
       name: 'graeme',

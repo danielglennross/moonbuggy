@@ -5,9 +5,21 @@ import { $resolvers } from '../schema';
 
 export type ResolverOptionFn = (option: OptionsTag) => void;
 
+export function root(): ResolverOptionFn {
+  return function (option: OptionsTag) {
+    option.root = true;
+  };
+}
+
 export function exportOnly(): ResolverOptionFn {
   return function (option: OptionsTag) {
     option.export = true;
+  };
+}
+
+export function typeFor(name: string): ResolverOptionFn {
+  return function (option: OptionsTag) {
+    option.typeFor = name;
   };
 }
 

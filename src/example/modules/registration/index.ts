@@ -1,7 +1,6 @@
 'use strict';
 
 import {
-  module,
   rule,
   schema,
   resolver,
@@ -12,7 +11,6 @@ import {
   field,
 } from '../../../moonbuggy/index';
 
-@module(name('Registration'))
 class Registration {
 
   @resolver(

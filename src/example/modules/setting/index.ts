@@ -1,7 +1,6 @@
 'use strict';
 
 import {
-  module,
   rule,
   schema,
   resolver,
@@ -11,7 +10,6 @@ import {
 
 const requestExists = (context: any): boolean => !!context;
 
-@module()
 class Setting {
 
   @resolver(name('getSettings'), exportOnly())

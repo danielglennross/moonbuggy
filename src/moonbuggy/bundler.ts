@@ -1,10 +1,10 @@
 import requireDir = require('require-dir');
 
+import { Tag, SimpleTag, OptionsTag, ImportOption, TypeOption, ResolverOption } from './decorators/types';
 import { getNonEnumerableEntries } from './utils/objectExt';
 
 import {
   Resolver,
-  ImportModule,
   $schemas,
   $resolvers,
   $moduleName,
@@ -17,15 +17,15 @@ export class BundleOptions {
 }
 
 export class Bundle {
-  public typeDefs: string;
+  public typeDefs: string[];
   public resolvers: object;
 }
 
 function bundleSchema(m: any, bundle: Bundle) {
   (m[$schemas] || []).forEach((sProp: string) => {
-    const schemaFn = m.prototype[sProp];
+    const schemaFn = m.prototype[sProp].bind(m.prototype);
     const schemaRes = schemaFn() as string;
-    bundle.typeDefs = bundle.typeDefs.concat(schemaRes);
+    bundle.typeDefs = [...bundle.typeDefs, schemaRes];
   });
 }
 
@@ -35,57 +35,77 @@ function bundleResolvers(m: any, bundle: Bundle) {
       return;
     }
 
-    const resolverFn = m.prototype[rProp.field];
-    bundle.resolvers[m[$moduleName]] = Object.assign(
-      bundle.resolvers[m[$moduleName]] || {}, { [rProp.name]: resolverFn },
-    );
+    let resolverFn = m.prototype[rProp.field];
+    if (resolverFn instanceof Function) {
+      resolverFn = resolverFn.bind(m.prototype);
+    }
+
+    if (rProp.root) {
+      bundle.resolvers = {
+        ...bundle.resolvers || {},
+        [rProp.name]: resolverFn,
+      };
+    }
+
+    if (rProp.typeFor) {
+      bundle.resolvers[rProp.typeFor] = {
+        ...bundle.resolvers[rProp.typeFor] || {},
+        [rProp.name]: resolverFn,
+      };
+    }
   });
 }
 
 function bundleImportResolvers(m: any, bundle: Bundle, modules: any[]) {
-  (m[$importResolvers] || []).forEach((irProp: ImportModule) => {
-    const matchingModule = modules.find(
-      (ir: any) => ir.__proto__.constructor[$moduleName] === irProp.moduleName,
-    );
+  (m[$importResolvers] || []).forEach((irProp: TypeOption) => {
 
-    if (!matchingModule) {
-      return;
-    }
+    irProp.importOptions.forEach((ro: ResolverOption) => {
 
-    const filteredModule =
-      getNonEnumerableEntries(matchingModule.__proto__)
-      .reduce((arr, [k, v]): any => {
-        const n = matchingModule.__proto__.constructor;
-
-        const exported = (<Resolver[]>n[$resolvers])
-          .filter(r => r.export)
-          .find(e => e.field === k);
-
-        if (exported) {
-          arr = [...arr, {
-            name: exported.name,
-            value: v,
-          }];
-        }
-        return arr;
-      }, []);
-
-    if (!filteredModule.length) {
-      return;
-    }
-
-    (irProp.resolverNames || []).forEach((rn: string) => {
-      const { name, value } = filteredModule.find(v => v.name === rn);
-      bundle.resolvers[m[$moduleName]] = Object.assign(
-        bundle.resolvers[m[$moduleName]] || {}, { [name]: value as any },
+      const matchingModule = modules.find(
+        (ir: any) => ir.__proto__.constructor[$moduleName] === ro.moduleName,
       );
+
+      if (!matchingModule) {
+        return;
+      }
+
+      const filteredModule =
+        getNonEnumerableEntries(matchingModule.__proto__)
+        .reduce((arr, [k, v]): any => {
+          const n = matchingModule.__proto__.constructor;
+
+          const exported = (<Resolver[]>n[$resolvers])
+            .filter(r => r.export)
+            .find(e => e.field === k);
+
+          if (exported) {
+            arr = [...arr, {
+              name: exported.name,
+              value: v,
+            }];
+          }
+          return arr;
+        }, []);
+
+      if (!filteredModule.length) {
+        return;
+      }
+
+      (ro.resolverNames || []).forEach((rn: string) => {
+        const { name, value } = filteredModule.find(v => v.name === rn);
+        bundle.resolvers[irProp.typeName] = {
+          ...bundle.resolvers[irProp.typeName] || {},
+          [name]: value as any,
+        };
+      });
     });
+
   });
 }
 
 export function getBundle(options: BundleOptions): Bundle {
   const defaultBundle: Bundle = {
-    typeDefs: '',
+    typeDefs: [],
     resolvers: {},
   };
 
@@ -95,15 +115,54 @@ export function getBundle(options: BundleOptions): Bundle {
 
   const modules = Object.values(dirs).map(
     m => m[options.moduleFilename || 'index'].default,
-  );
+  ).filter(Boolean);
+
+  modules.forEach((m: any) => {
+    const mod = m.__proto__.constructor;
+
+    mod[$moduleName] = mod.name;
+
+    function attachMetaDataToModule(mm: Tag, key: string) {
+      mm.match({
+        SimpleTag: (meta: SimpleTag) => {
+          mod[meta.type] = [...mod[meta.type] || [], key];
+        },
+        OptionsTag: (meta: OptionsTag) => {
+          mod[meta.type] = [...mod[meta.type] || [], (<Resolver>{
+            field: key,
+            name: meta.name || key,
+            export: meta.export,
+            typeFor: meta.typeFor,
+            root: meta.root,
+          })];
+        },
+        ImportTag: (meta: ImportOption) => {
+          mod[meta.type] = meta.importTypes;
+        },
+      });
+    }
+
+    const tag: Tag = Reflect.getMetadata('design:graphqlmeta', mod);
+    if (tag) {
+      attachMetaDataToModule(tag, mod[$moduleName]);
+    }
+
+    const obj: any = (mod as any).prototype;
+    getNonEnumerableEntries(obj).forEach(([key, value]: any) => {
+      const graphQLMeta: Tag = Reflect.getMetadata('design:graphqlmeta', obj, key);
+      if (graphQLMeta) {
+        attachMetaDataToModule(graphQLMeta, key);
+      }
+    });
+  });
 
   const bundled: Bundle = modules.reduce((b: Bundle, m: any) => {
     const mod = m.__proto__.constructor;
-    if (mod[$moduleName]) {
-      bundleSchema(mod, b);
-      bundleResolvers(mod, b);
-      bundleImportResolvers(mod, b, modules);
-    }
+
+    bundleSchema(mod, b);
+    bundleResolvers(mod, b);
+    bundleImportResolvers(mod, b, modules);
+
     return b;
   }, defaultBundle);
 

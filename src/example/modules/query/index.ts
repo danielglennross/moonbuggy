@@ -1,9 +1,9 @@
 'use strict';
 
-import { module, rule, schema, imports } from '../../../moonbuggy/index';
+import { forType, moduleResolver, rule, schema, imports } from '../../../moonbuggy/index';
 
-@module(
-  imports('User', ['user']),
+@imports(
+  forType('Query', moduleResolver('User', ['user'])),
 )
 class Query {
 
