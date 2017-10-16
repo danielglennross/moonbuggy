@@ -4,30 +4,33 @@ See `src/example` for full example
 
 ```ts
 import { Request } from 'hapi';
+import * as json from 'graphql-type-json';
 import { 
-  module, 
   imports,
+  moduleResolver,
+  forType,
+  firstClass, 
   name,
-  rule, 
-  exportOnly, 
+  rule,
+  inType, 
+  asExport, 
   resolver, 
   schema 
 } from './index';
 
 const isAuth = (request: Request): boolean => Boolean(request.auth.credentials);
 
-// define our module (name is class name by default, use `name` to override)
-// optionally import resolvers from `Setting` module (to be used within our schema)
-@module(
-  name('Player'), 
-  imports('Setting', ['getSettings']),
+// optionally import exported resolvers from other modules
+// for use within specified types
+@imports(
+  forType('Player', moduleResolver('Setting', ['getSettings']),
 ) 
 class User {
   // define resolver (name is method name by default, use `name` to override)
   //
-  // optionally mark resolver as `exportOnly` 
+  // optionally mark resolver as `asExport` 
   // this resolver will not be bundled up in this module but can be imported by others
-  @resolver(name('user'), exportOnly()) 
+  @resolver(name('user'), asExport()) 
   // optionally define pre-conditions (can have multiple)
   @rule(isAuth, new Error('User is unauthenticated'))
   public user(root: any, args: any, context: Request) {
@@ -41,14 +44,22 @@ class User {
     };
   }
 
-  @resolver(name('friends'))
+  // register the resolver for field `friends` in type `User`
+  @resolver(name('friends'), inType('User'))
   public friendsResolver(root: any, args: any, context: Request) {
     return [{
       name: 'graeme',
     }];
   }
 
-  @schema() // mark partial/full schema
+  // register a root level type resolver (note, this example is a getter)
+  @resolver(firstClass())
+  public get JSON() {
+    return json
+  }
+
+  // mark partial/full schema
+  @schema()
   public friends() {
     return `
       type Friend {
@@ -94,22 +105,21 @@ A mutation request should only provide one implemented field. The corresponding
 rule is evaluated ensuring the request is valid, and the field's data is passed to the single resolver.
 
 ```typescript
-import { 
-  module, 
-  imports,
+import {
+  inputMapper, 
+  field,
   name,
   rule, 
-  exportOnly, 
+  asExport, 
   resolver, 
   schema 
 } from './index';
 
-@module()
 class Registration {
 
   @resolver(
     name('register'),
-    exportOnly(),
+    asExport(),
   )
   @inputMapper('input', new Error('failed to authorize register input'),
     field('retail', (request) => !!request.auth.credentials.retail),
