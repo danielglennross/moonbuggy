@@ -49,7 +49,7 @@ export function inputMapper(inputName: string, errorOrField: Error | IField, ...
 
       const result = originalMethod.apply(this, [
         root,
-        Object.assign(data, { [inputName]: data[inputName][fieldName] }),
+        {...data, [inputName]: data[inputName][fieldName] },
         context,
         paramInfo,
       ]);

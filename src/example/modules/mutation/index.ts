@@ -1,9 +1,9 @@
 'use strict';
 
-import { forType, moduleResolver, rule, schema, imports, name } from '../../../moonbuggy/index';
+import { forType, moduleResolvers, rule, schema, moduleImports, name } from '../../../moonbuggy/index';
 
-@imports(
-  forType('Mutation', moduleResolver('Registration', ['register'])),
+@moduleImports(
+  forType('Mutation', moduleResolvers('Registration', ['register'])),
 )
 class Mutation {
 

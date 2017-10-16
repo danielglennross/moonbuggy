@@ -2,23 +2,23 @@
 
 import {
   forType,
-  typeFor,
-  moduleResolver,
-  imports,
+  inType,
+  moduleResolvers,
+  moduleImports,
   rule,
   resolver,
   schema,
-  exportOnly,
+  asExport,
 } from '../../../moonbuggy/index';
 
 const requestExists = (context: any): boolean => !!context;
 
-@imports(
-  forType('User', moduleResolver('Setting', ['getSettings'])),
+@moduleImports(
+  forType('User', moduleResolvers('Setting', ['getSettings'])),
 )
 class User {
 
-  @resolver(exportOnly())
+  @resolver(asExport())
   @rule(requestExists)
   public user(root: any, args: any, context: any) {
     return {
@@ -31,7 +31,7 @@ class User {
     };
   }
 
-  @resolver(typeFor('User'))
+  @resolver(inType('User'))
   public friends(root: any, args: any, context: any) {
     return [{
       name: 'graeme',

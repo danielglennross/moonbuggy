@@ -4,9 +4,8 @@ import {
   rule,
   schema,
   resolver,
-  exportOnly,
+  asExport,
   name,
-  imports,
   inputMapper,
   field,
 } from '../../../moonbuggy/index';
@@ -15,7 +14,7 @@ class Registration {
 
   @resolver(
     name('register'),
-    exportOnly(),
+    asExport(),
   )
   @inputMapper('input', new Error('fails'),
     field('retail', (request) => !!request),

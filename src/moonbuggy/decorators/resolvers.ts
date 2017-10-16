@@ -1,34 +1,40 @@
 import 'reflect-metadata';
 
-import { OptionsTag } from './types';
-import { $resolvers } from '../schema';
+import { Resolver } from './types';
+import { metaKey, $resolvers } from '../schema';
 
-export type ResolverOptionFn = (option: OptionsTag) => void;
+export type ResolverFn = (option: Resolver) => void;
 
-export function root(): ResolverOptionFn {
-  return function (option: OptionsTag) {
+export function firstClass(): ResolverFn {
+  return function (option: Resolver) {
     option.root = true;
   };
 }
 
-export function exportOnly(): ResolverOptionFn {
-  return function (option: OptionsTag) {
+export function asExport(): ResolverFn {
+  return function (option: Resolver) {
     option.export = true;
   };
 }
 
-export function typeFor(name: string): ResolverOptionFn {
-  return function (option: OptionsTag) {
-    option.typeFor = name;
+export function inType(n: string): ResolverFn {
+  return function (option: Resolver) {
+    option.typeFor = n;
   };
 }
 
-export function resolver(...options: ResolverOptionFn[]) {
-  const meta = new OptionsTag();
-  meta.type = $resolvers;
-  const data: OptionsTag = options.reduce((obj, op): any => {
-    op(obj);
+export function name(n: string): ResolverFn {
+  return function (option: Resolver) {
+    option.name = n;
+  };
+}
+
+export function resolver(...options: ResolverFn[]) {
+  const data = options.reduce<Resolver>((obj, fn): any => {
+    fn(obj);
     return obj;
-  }, meta);
-  return Reflect.metadata('design:graphqlmeta', data);
+  }, <Resolver>{
+    type: $resolvers,
+  });
+  return Reflect.metadata(metaKey, data);
 }

@@ -1,10 +1,10 @@
 import requireDir = require('require-dir');
 
-import { Tag, SimpleTag, OptionsTag, ImportOption, TypeOption, ResolverOption } from './decorators/types';
+import { metaKey } from './schema';
+import { Tag, Schema, Resolver, Importer, TypeOption, ModuleResolverOption } from './decorators/types';
 import { getNonEnumerableEntries } from './utils/objectExt';
 
 import {
-  Resolver,
   $schemas,
   $resolvers,
   $moduleName,
@@ -21,36 +21,53 @@ export class Bundle {
   public resolvers: object;
 }
 
+interface IField {
+  field: string;
+}
+
+class SchemaField implements IField {
+  public field: string;
+}
+
+class ResolverField implements IField {
+  public field: string;
+
+  public name: string;
+  public typeFor: string;
+  public export: boolean;
+  public root: boolean;
+}
+
 function bundleSchema(m: any, bundle: Bundle) {
-  (m[$schemas] || []).forEach((sProp: string) => {
-    const schemaFn = m.prototype[sProp].bind(m.prototype);
+  (m[$schemas] || []).forEach((sProp: SchemaField) => {
+    const schemaFn = m.prototype[sProp.field].bind(m.prototype);
     const schemaRes = schemaFn() as string;
     bundle.typeDefs = [...bundle.typeDefs, schemaRes];
   });
 }
 
 function bundleResolvers(m: any, bundle: Bundle) {
-  (m[$resolvers] || []).forEach((rProp: Resolver) => {
+  (m[$resolvers] || []).forEach((rProp: ResolverField) => {
     if (rProp.export) {
       return;
     }
 
-    let resolverFn = m.prototype[rProp.field];
-    if (resolverFn instanceof Function) {
-      resolverFn = resolverFn.bind(m.prototype);
+    let resolverFnOrObj = m.prototype[rProp.field];
+    if (resolverFnOrObj instanceof Function) {
+      resolverFnOrObj = resolverFnOrObj.bind(m.prototype);
     }
 
     if (rProp.root) {
       bundle.resolvers = {
         ...bundle.resolvers || {},
-        [rProp.name]: resolverFn,
+        [rProp.name]: resolverFnOrObj,
       };
     }
 
     if (rProp.typeFor) {
       bundle.resolvers[rProp.typeFor] = {
         ...bundle.resolvers[rProp.typeFor] || {},
-        [rProp.name]: resolverFn,
+        [rProp.name]: resolverFnOrObj,
       };
     }
   });
@@ -59,7 +76,7 @@ function bundleResolvers(m: any, bundle: Bundle) {
 function bundleImportResolvers(m: any, bundle: Bundle, modules: any[]) {
   (m[$importResolvers] || []).forEach((irProp: TypeOption) => {
 
-    irProp.importOptions.forEach((ro: ResolverOption) => {
+    irProp.importOptions.forEach((ro: ModuleResolverOption) => {
 
       const matchingModule = modules.find(
         (ir: any) => ir.__proto__.constructor[$moduleName] === ro.moduleName,
@@ -74,7 +91,7 @@ function bundleImportResolvers(m: any, bundle: Bundle, modules: any[]) {
         .reduce((arr, [k, v]): any => {
           const n = matchingModule.__proto__.constructor;
 
-          const exported = (<Resolver[]>n[$resolvers])
+          const exported = (<ResolverField[]>n[$resolvers])
             .filter(r => r.export)
             .find(e => e.field === k);
 
@@ -114,7 +131,7 @@ export function getBundle(options: BundleOptions): Bundle {
   );
 
   const modules = Object.values(dirs).map(
-    m => m[options.moduleFilename || 'index'].default,
+    m => (m[options.moduleFilename || 'index'] || {}).default,
   ).filter(Boolean);
 
   modules.forEach((m: any) => {
@@ -122,36 +139,40 @@ export function getBundle(options: BundleOptions): Bundle {
 
     mod[$moduleName] = mod.name;
 
-    function attachMetaDataToModule(mm: Tag, key: string) {
-      mm.match({
-        SimpleTag: (meta: SimpleTag) => {
-          mod[meta.type] = [...mod[meta.type] || [], key];
+    function attachMetaDataToModule(tag: Tag, field: string) {
+      tag.match({
+        Schema: (meta: Schema) => {
+          mod[meta.type] = [...mod[meta.type] || [], (<SchemaField>{
+            field,
+          })];
         },
-        OptionsTag: (meta: OptionsTag) => {
-          mod[meta.type] = [...mod[meta.type] || [], (<Resolver>{
-            field: key,
-            name: meta.name || key,
+        Resolver: (meta: Resolver) => {
+          mod[meta.type] = [...mod[meta.type] || [], (<ResolverField>{
+            field,
+            name: meta.name || field,
             export: meta.export,
             typeFor: meta.typeFor,
             root: meta.root,
           })];
         },
-        ImportTag: (meta: ImportOption) => {
+        Importer: (meta: Importer) => {
           mod[meta.type] = meta.importTypes;
         },
       });
     }
 
-    const tag: Tag = Reflect.getMetadata('design:graphqlmeta', mod);
-    if (tag) {
-      attachMetaDataToModule(tag, mod[$moduleName]);
+    // fetch meta from the object
+    const modMeta: Tag = Reflect.getMetadata(metaKey, mod);
+    if (modMeta) {
+      attachMetaDataToModule(modMeta, mod[$moduleName]);
     }
 
+    // fetch meta from the object's members
     const obj: any = (mod as any).prototype;
     getNonEnumerableEntries(obj).forEach(([key, value]: any) => {
-      const graphQLMeta: Tag = Reflect.getMetadata('design:graphqlmeta', obj, key);
-      if (graphQLMeta) {
-        attachMetaDataToModule(graphQLMeta, key);
+      const fieldMeta: Tag = Reflect.getMetadata(metaKey, obj, key);
+      if (fieldMeta) {
+        attachMetaDataToModule(fieldMeta, key);
       }
     });
   });

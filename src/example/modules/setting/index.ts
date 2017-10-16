@@ -5,14 +5,14 @@ import {
   schema,
   resolver,
   name,
-  exportOnly,
+  asExport,
 } from '../../../moonbuggy/index';
 
 const requestExists = (context: any): boolean => !!context;
 
 class Setting {
 
-  @resolver(name('getSettings'), exportOnly())
+  @resolver(name('getSettings'), asExport())
   @rule(requestExists)
   public settings(root: any, args: any, context: any) {
     return [{

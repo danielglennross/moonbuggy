@@ -1,13 +1,11 @@
-export type rulePredicate = (context: any) => boolean | Promise<boolean>;
-
 export interface ITagPattern {
-  SimpleTag: (meta: SimpleTag) => void;
-  OptionsTag: (optionalMeta: OptionsTag) => void;
-  ImportTag: (importMeta: ImportOption) => void;
+  Schema: (schema: Schema) => void;
+  Resolver: (resolver: Resolver) => void;
+  Importer: (importer: Importer) => void;
 }
 
 export interface ITagMatcher {
-  match(metaDataPattern: ITagPattern);
+  match(pattern: ITagPattern);
 }
 
 export abstract class Tag implements ITagMatcher {
@@ -15,52 +13,40 @@ export abstract class Tag implements ITagMatcher {
   public abstract match(p: ITagPattern);
 }
 
-export class SimpleTag extends Tag {
-  public alias: string[];
-
+export class Schema extends Tag {
   public match(p: ITagPattern) {
-    return p.SimpleTag(this);
+    return p.Schema(this);
   }
 }
 
-export class OptionsTag extends Tag implements INameOption {
+export class Resolver extends Tag {
   public name: string;
+  public typeFor: string;
 
   public export: boolean;
   public root: boolean;
-  public typeFor: string;
 
   public match(p: ITagPattern) {
-    return p.OptionsTag(this);
+    return p.Resolver(this);
   }
 }
 
-export class ResolverOption {
+export class Importer extends Tag {
+  public importTypes: TypeOption[];
+
+  public match(p: ITagPattern) {
+    return p.Importer(this);
+  }
+}
+
+export class ModuleResolverOption {
   public moduleName: string;
   public resolverNames: string[];
 }
 
 export class TypeOption {
   public typeName: string;
-  public importOptions: ResolverOption[];
+  public importOptions: ModuleResolverOption[];
 }
 
-export class ImportOption extends Tag {
-  public importTypes: TypeOption[];
-
-  public match(p: ITagPattern) {
-    return p.ImportTag(this);
-  }
-}
-
-export interface INameOption {
-  name: string;
-}
-
-export type OptionNameFn = (option: INameOption) => void;
-
-export function name(n: string): OptionNameFn {
-  return function (option: INameOption) {
-    option.name = n;
-  };
-}
+export type rulePredicate = (context: any) => boolean | Promise<boolean>;
