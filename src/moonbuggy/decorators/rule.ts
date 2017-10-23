@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
 import { rulePredicate } from './types';
-import { getNonEnumerableEntries, tuple } from '../utils/objectExt';
+import { tuple } from '../utils/objectExt';
 
 export function rule(predicate: rulePredicate, error: Error = null) {
   return function(target: any, propertyKey: string, descriptor: PropertyDescriptor) {

@@ -27,14 +27,15 @@ export function forType(typeName: string, ...resolvers: ModuleResolverOptionFn[]
 }
 
 export function moduleImports(...options: TypeOptionFn[]) {
+  const importer = new Importer();
+  importer.type = $importResolvers;
+
   const option = options.reduce<Importer>((obj, fn) => {
     const op = new TypeOption();
     fn(op);
-    option.importTypes = [...option.importTypes || [], op];
+    obj.importTypes = [...obj.importTypes || [], op];
     return obj;
-  }, <Importer>{
-    type: $importResolvers,
-  });
+  }, importer);
 
   return Reflect.metadata(metaKey, option);
 }

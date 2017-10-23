@@ -5,6 +5,7 @@ import { metaKey, $schemas } from '../schema';
 import { Schema } from './types';
 
 export function schema() {
-  const meta = <Schema>{ type: $schemas };
+  const meta = new Schema();
+  meta.type = $schemas;
   return Reflect.metadata(metaKey, meta);
 }

@@ -30,11 +30,12 @@ export function name(n: string): ResolverFn {
 }
 
 export function resolver(...options: ResolverFn[]) {
+  const resol = new Resolver();
+  resol.type = $resolvers;
+
   const data = options.reduce<Resolver>((obj, fn): any => {
     fn(obj);
     return obj;
-  }, <Resolver>{
-    type: $resolvers,
-  });
+  }, resol);
   return Reflect.metadata(metaKey, data);
 }
